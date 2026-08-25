@@ -6,113 +6,35 @@
 <title>Floorball → Singular</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
-    background: #111;
-    color: #eee;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 24px;
+    background: #111; color: #eee; font-family: 'SF Mono', 'Fira Code', monospace;
+    display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px;
   }
-
-  .card {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    padding: 32px;
-    width: 100%;
-    max-width: 500px;
-  }
-
-  h1 {
-    font-size: 13px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: #555;
-    margin-bottom: 24px;
-  }
-
-  .field {
-    margin-bottom: 16px;
-  }
-
-  label {
-    display: block;
-    font-size: 11px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: #555;
-    margin-bottom: 6px;
-  }
-
+  .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 32px; width: 100%; max-width: 520px; }
+  h1 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #555; margin-bottom: 24px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #555; margin-bottom: 6px; }
   input {
-    width: 100%;
-    background: #111;
-    border: 1px solid #2a2a2a;
-    border-radius: 6px;
-    color: #eee;
-    font-family: inherit;
-    font-size: 12px;
-    padding: 10px 12px;
+    width: 100%; background: #111; border: 1px solid #2a2a2a; border-radius: 6px;
+    color: #eee; font-family: inherit; font-size: 12px; padding: 10px 12px;
   }
-
-  input:focus {
-    outline: none;
-    border-color: #444;
-  }
-
+  input:focus { outline: none; border-color: #444; }
   .btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 6px;
-    border: none;
-    font-family: inherit;
-    font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: opacity .15s;
+    width: 100%; padding: 12px; border-radius: 6px; border: none; font-family: inherit;
+    font-size: 12px; letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+    margin-top: 8px; transition: opacity .15s;
   }
   .btn:hover { opacity: .85; }
-
   .btn-start { background: #22c55e; color: #000; }
-  .btn-stop  { background: #ef4444; color: #fff; }
-
-  .status {
-    margin-top: 20px;
-    padding: 14px;
-    border-radius: 8px;
-    background: #111;
-    border: 1px solid #2a2a2a;
-    font-size: 12px;
-    line-height: 1.8;
-  }
-
-  .dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-    background: #555;
-  }
-  .dot.green  { background: #22c55e; }
-  .dot.red    { background: #ef4444; }
+  .btn-stop { background: #ef4444; color: #fff; }
+  .status { margin-top: 20px; padding: 14px; border-radius: 8px; background: #111; border: 1px solid #2a2a2a; font-size: 12px; line-height: 1.8; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #555; }
+  .dot.green { background: #22c55e; }
+  .dot.red { background: #ef4444; }
   .dot.yellow { background: #eab308; }
-
-  .data-row {
-    display: flex;
-    justify-content: space-between;
-    color: #777;
-    font-size: 11px;
-    padding: 3px 0;
-    border-bottom: 1px solid #1e1e1e;
-  }
+  .data-row { display: flex; justify-content: space-between; color: #777; font-size: 11px; padding: 3px 0; border-bottom: 1px solid #1e1e1e; }
   .data-row span:last-child { color: #ccc; }
+  .raw { margin-top: 12px; padding: 10px; background: #0a0a0a; border-radius: 6px; font-size: 10px; color: #666; word-break: break-all; max-height: 120px; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -130,11 +52,12 @@
   </div>
 
   <button class="btn btn-start" id="start-btn" onclick="startPolling()">▶ Start</button>
-  <button class="btn btn-stop"  id="stop-btn"  onclick="stopPolling()" style="display:none">■ Stop</button>
+  <button class="btn btn-stop" id="stop-btn" onclick="stopPolling()" style="display:none">■ Stop</button>
 
   <div class="status" id="status">
     <span class="dot" id="dot"></span><span id="status-text">Not running</span>
     <div id="data-display" style="margin-top:10px;"></div>
+    <div class="raw" id="raw-display"></div>
   </div>
 </div>
 
@@ -144,124 +67,113 @@ const SINGULAR_TOKEN = '5bPZ7ge9g5yGu1C9VLTQSW';
 const SINGULAR_URL   = `https://app.singular.live/apiv2/controlapps/${SINGULAR_TOKEN}/control`;
 
 const TOP_TEAM_MAP = {
-  'Baggage':          'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0bCWsxI7pm3knqvnYe0xXV_w1920h1080.png',
-  'Team Baggage':     'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0bCWsxI7pm3knqvnYe0xXV_w1920h1080.png',
-  'Caribe':           'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3eNNs9lEHpNL4yN1xS8FG8_w1920h1080.png',
-  'Del Caribe':       'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3eNNs9lEHpNL4yN1xS8FG8_w1920h1080.png',
+  'Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0bCWsxI7pm3knqvnYe0xXV_w1920h1080.png',
+  'Team Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0bCWsxI7pm3knqvnYe0xXV_w1920h1080.png',
+  'Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3eNNs9lEHpNL4yN1xS8FG8_w1920h1080.png',
+  'Del Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3eNNs9lEHpNL4yN1xS8FG8_w1920h1080.png',
   'Forgotten Rotten': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2V2QAhDmACEQTBshZDeKPZ_w1920h1080.png',
-  'Macflurry Power':  'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/09J8TqzEv70KD4NPIJV5kC_w1920h1080.png',
-  'MacFlurry Power':  'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/09J8TqzEv70KD4NPIJV5kC_w1920h1080.png',
-  'We Got Ice':       'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0960eleEbcB5pehpwo8McS_w1920h1080.png',
-  'Woogas':           'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4zeHRts4lzJ6zEhf5YzC3s_w1920h1080.png',
+  'Macflurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/09J8TqzEv70KD4NPIJV5kC_w1920h1080.png',
+  'MacFlurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/09J8TqzEv70KD4NPIJV5kC_w1920h1080.png',
+  'We Got Ice': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0960eleEbcB5pehpwo8McS_w1920h1080.png',
+  'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4zeHRts4lzJ6zEhf5YzC3s_w1920h1080.png',
 };
 
 const BOTTOM_TEAM_MAP = {
-  'Baggage':          'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3wWmOZrn6CPgtCyXpUXaS9_w1920h1080.png',
-  'Team Baggage':     'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3wWmOZrn6CPgtCyXpUXaS9_w1920h1080.png',
-  'Del Caribe':       'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tg7gKy8mANBTwAmFoMK6f_w1920h1080.png',
-  'Caribe':           'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tg7gKy8mANBTwAmFoMK6f_w1920h1080.png',
+  'Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3wWmOZrn6CPgtCyXpUXaS9_w1920h1080.png',
+  'Team Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3wWmOZrn6CPgtCyXpUXaS9_w1920h1080.png',
+  'Del Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tg7gKy8mANBTwAmFoMK6f_w1920h1080.png',
+  'Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tg7gKy8mANBTwAmFoMK6f_w1920h1080.png',
   'Forgotten Rotten': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2wjkgIOTFKkyUtVRDx16yj_w1920h1080.png',
-  'Macflurry Power':  'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7tB7tTpbnG2PBRapju65d0_w1920h1080.png',
-  'MacFlurry Power':  'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7tB7tTpbnG2PBRapju65d0_w1920h1080.png',
-  'We Got Ice':       'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4TuNnznwXwxRh1rum9nawh_w1920h1080.png',
-  'Woogas':           'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0F3VUjgNhZFRZziSmjFBX0_w1920h1080.png',
+  'Macflurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7tB7tTpbnG2PBRapju65d0_w1920h1080.png',
+  'MacFlurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7tB7tTpbnG2PBRapju65d0_w1920h1080.png',
+  'We Got Ice': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4TuNnznwXwxRh1rum9nawh_w1920h1080.png',
+  'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0F3VUjgNhZFRZziSmjFBX0_w1920h1080.png',
 };
 
 function parsePeriod(p) {
   if (!p || p === 'Scheduled') return 1;
-  // Handle "Period 1", "Period 2" etc
-  const match = String(p).match(/\d+/);
-  const result = match ? parseInt(match[0]) : 1;
-  console.log('Period input:', p, '→ output:', result);
+  var match = String(p).match(/\d+/);
+  var result = match ? parseInt(match[0], 10) : 1;
   return result;
 }
 
-let timer = null;
-let lastData = null;
-
-function setStatus(state, text) {
-  const dot = document.getElementById('dot');
-  dot.className = 'dot ' + state;
-  document.getElementById('status-text').textContent = text;
-}
-
-function showData(d) {
-  document.getElementById('data-display').innerHTML = `
-    <div class="data-row"><span>Home Team</span><span>${d.homeTeam}</span></div>
-    <div class="data-row"><span>Away Team</span><span>${d.awayTeam}</span></div>
-    <div class="data-row"><span>Score</span><span>${d.homeScore} – ${d.awayScore}</span></div>
-    <div class="data-row"><span>Period</span><span>${d.period}</span></div>
-    <div class="data-row"><span>Last push</span><span>${new Date().toLocaleTimeString()}</span></div>
-  `;
-}
-
 function getGameId() {
-  const input = document.getElementById('game-id').value.trim();
-  // If it looks like a URL, extract the game parameter
+  var input = document.getElementById('game-id').value.trim();
   try {
-    const url = new URL(input);
-    const game = url.searchParams.get('game');
+    var url = new URL(input);
+    var game = url.searchParams.get('game');
     if (game) return game;
   } catch(e) {}
-  // Otherwise treat it as a raw game ID
   return input;
 }
 
+var timer = null;
+
+function setStatus(state, text) {
+  document.getElementById('dot').className = 'dot ' + state;
+  document.getElementById('status-text').textContent = text;
+}
+
+function showData(d, periodValue, body) {
+  document.getElementById('data-display').innerHTML =
+    '<div class="data-row"><span>Home Team</span><span>' + d.homeTeam + '</span></div>' +
+    '<div class="data-row"><span>Away Team</span><span>' + d.awayTeam + '</span></div>' +
+    '<div class="data-row"><span>Score</span><span>' + d.homeScore + ' \u2013 ' + d.awayScore + '</span></div>' +
+    '<div class="data-row"><span>Raw Period</span><span>' + d.period + '</span></div>' +
+    '<div class="data-row"><span>Parsed Period</span><span>' + periodValue + '</span></div>' +
+    '<div class="data-row"><span>Last push</span><span>' + new Date().toLocaleTimeString() + '</span></div>';
+  document.getElementById('raw-display').textContent = JSON.stringify(body, null, 2);
+}
+
 async function poll() {
-  const gameId  = getGameId();
-  const apiUrl  = `https://blitzball-platform-lucasdaversas-projects.vercel.app/api/scorebug/floorball/${gameId}?key=${API_KEY}`;
+  var gameId = getGameId();
+  var apiUrl = 'https://blitzball-platform-lucasdaversas-projects.vercel.app/api/scorebug/floorball/' + gameId + '?key=' + API_KEY;
 
   try {
     setStatus('yellow', 'Fetching...');
-    const res = await fetch(apiUrl);
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const d = await res.json();
+    var res = await fetch(apiUrl);
+    if (!res.ok) throw new Error('API ' + res.status);
+    var d = await res.json();
 
-    // Only push to Singular if data changed
-    const key = JSON.stringify(d);
-    if (key === lastData) {
-      setStatus('green', `No change · ${new Date().toLocaleTimeString()}`);
-      return;
-    }
-    lastData = key;
+    var periodValue = parsePeriod(d.period);
 
-    const body = [
+    var body = [
       {
         subCompositionName: 'Batter',
         payload: {
-          'Top Score':    parseInt(d.homeScore) || 0,
+          'Top Score': parseInt(d.homeScore) || 0,
           'Bottom Score': parseInt(d.awayScore) || 0,
-          'Period':       parsePeriod(d.period),
+          'Period': periodValue
         }
       },
       {
         subCompositionName: 'Teams',
         payload: {
-          'Top Team':    BOTTOM_TEAM_MAP[d.homeTeam] || '',
-          'Bottom Team': TOP_TEAM_MAP[d.awayTeam]    || '',
+          'Top Team': BOTTOM_TEAM_MAP[d.homeTeam] || '',
+          'Bottom Team': TOP_TEAM_MAP[d.awayTeam] || ''
         }
       }
     ];
 
-    const sRes = await fetch(SINGULAR_URL, {
+    var sRes = await fetch(SINGULAR_URL, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
 
-    if (!sRes.ok) throw new Error(`Singular ${sRes.status}`);
+    if (!sRes.ok) throw new Error('Singular ' + sRes.status);
 
-    showData(d);
-    setStatus('green', `Updated · ${new Date().toLocaleTimeString()}`);
+    showData(d, periodValue, body);
+    setStatus('green', 'Updated \u00b7 ' + new Date().toLocaleTimeString());
   } catch(e) {
-    setStatus('red', `Error: ${e.message}`);
+    setStatus('red', 'Error: ' + e.message);
   }
 }
 
 function startPolling() {
-  const interval = parseInt(document.getElementById('interval').value) * 1000;
+  var interval = parseInt(document.getElementById('interval').value) * 1000;
   document.getElementById('start-btn').style.display = 'none';
-  document.getElementById('stop-btn').style.display  = 'block';
+  document.getElementById('stop-btn').style.display = 'block';
   poll();
   timer = setInterval(poll, interval);
 }
@@ -269,9 +181,8 @@ function startPolling() {
 function stopPolling() {
   clearInterval(timer);
   timer = null;
-  lastData = null;
   document.getElementById('start-btn').style.display = 'block';
-  document.getElementById('stop-btn').style.display  = 'none';
+  document.getElementById('stop-btn').style.display = 'none';
   setStatus('', 'Stopped');
 }
 </script>
