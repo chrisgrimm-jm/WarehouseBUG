@@ -169,8 +169,10 @@ const BOTTOM_TEAM_MAP = {
 
 function parsePeriod(p) {
   if (!p || p === 'Scheduled') return 1;
-  const n = parseInt(p);
-  return isNaN(n) ? 1 : n;
+  // Handle "Period 1", "Period 2" etc
+  const match = String(p).match(/\d+/);
+  if (match) return parseInt(match[0]);
+  return 1;
 }
 
 let timer = null;
