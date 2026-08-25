@@ -171,8 +171,9 @@ function parsePeriod(p) {
   if (!p || p === 'Scheduled') return 1;
   // Handle "Period 1", "Period 2" etc
   const match = String(p).match(/\d+/);
-  if (match) return parseInt(match[0]);
-  return 1;
+  const result = match ? parseInt(match[0]) : 1;
+  console.log('Period input:', p, '→ output:', result);
+  return result;
 }
 
 let timer = null;
