@@ -42,6 +42,23 @@
   <h1>⚡ Floorball → Singular</h1>
 
   <div class="field">
+    <label>Mode</label>
+    <div style="display:flex; gap:8px;">
+      <label style="display:flex; align-items:center; gap:6px; font-size:11px; text-transform:none; letter-spacing:0; color:#ccc; cursor:pointer;">
+        <input type="radio" name="mode" value="live" id="mode-live" checked style="width:auto;" onchange="toggleMode()"> Auto (live game)
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:11px; text-transform:none; letter-spacing:0; color:#ccc; cursor:pointer;">
+        <input type="radio" name="mode" value="manual" id="mode-manual" style="width:auto;" onchange="toggleMode()"> Manual (paste URL)
+      </label>
+    </div>
+  </div>
+
+  <div class="field" id="game-id-field" style="display:none;">
+    <label>Monitor URL or Game ID</label>
+    <input type="text" id="game-id" placeholder="Paste full monitor URL or just the game ID" />
+  </div>
+
+  <div class="field">
     <label>Poll interval (seconds)</label>
     <input type="number" id="interval" value="3" min="1" max="30" />
   </div>
@@ -94,6 +111,21 @@ function parsePeriod(p) {
 
 var timer = null;
 
+function toggleMode() {
+  var manual = document.getElementById('mode-manual').checked;
+  document.getElementById('game-id-field').style.display = manual ? 'block' : 'none';
+}
+
+function getGameId() {
+  var input = document.getElementById('game-id').value.trim();
+  try {
+    var url = new URL(input);
+    var game = url.searchParams.get('game');
+    if (game) return game;
+  } catch(e) {}
+  return input;
+}
+
 function setStatus(state, text) {
   document.getElementById('dot').className = 'dot ' + state;
   document.getElementById('status-text').textContent = text;
@@ -111,11 +143,23 @@ function showData(d, periodValue, body) {
 }
 
 async function poll() {
-  var apiUrl = 'https://blitzball-platform-lucasdaversas-projects.vercel.app/api/scorebug/floorball?key=' + API_KEY;
+  var isManual = document.getElementById('mode-manual').checked;
+  var apiUrl;
+  if (isManual) {
+    var gameId = getGameId();
+    if (!gameId) {
+      setStatus('red', 'Error: paste a game URL or ID first');
+      return;
+    }
+    apiUrl = 'https://blitzball-platform-lucasdaversas-projects.vercel.app/api/scorebug/floorball/' + gameId + '?key=' + API_KEY;
+  } else {
+    apiUrl = 'https://blitzball-platform-lucasdaversas-projects.vercel.app/api/scorebug/floorball?key=' + API_KEY;
+  }
 
   try {
     setStatus('yellow', 'Fetching...');
     var res = await fetch(apiUrl);
+    if (res.status === 404 && !isManual) throw new Error('No game currently marked live');
     if (!res.ok) throw new Error('API ' + res.status);
     var d = await res.json();
 
