@@ -114,6 +114,7 @@ const BOTTOM_TEAM_MAP = {
 };
 
 var timer = null;
+var pollSeq = 0;
 
 function toggleMode() {
   var manual = document.getElementById('mode-manual').checked;
@@ -145,6 +146,7 @@ function showData(d, body) {
 }
 
 async function poll() {
+  var mySeq = ++pollSeq;
   var isManual = document.getElementById('mode-manual').checked;
   var apiUrl;
   if (isManual) {
@@ -160,10 +162,15 @@ async function poll() {
 
   try {
     setStatus('yellow', 'Fetching...');
-    var res = await fetch(apiUrl);
+    var res = await fetch(apiUrl, { cache: 'no-store' });
     if (res.status === 404 && !isManual) throw new Error('No game currently marked live');
     if (!res.ok) throw new Error('API ' + res.status);
     var d = await res.json();
+
+    // A slower, older request can resolve after a newer poll already landed (network
+    // hiccup, cold start) and would otherwise overwrite fresh data with stale data.
+    // Drop anything superseded by a poll that started later than this one.
+    if (mySeq !== pollSeq) return;
 
     var body = [
       {
@@ -189,10 +196,12 @@ async function poll() {
     });
 
     if (!sRes.ok) throw new Error('Singular ' + sRes.status);
+    if (mySeq !== pollSeq) return;
 
     showData(d, body);
     setStatus('green', 'Updated · ' + new Date().toLocaleTimeString());
   } catch(e) {
+    if (mySeq !== pollSeq) return;
     setStatus('red', 'Error: ' + e.message);
   }
 }
