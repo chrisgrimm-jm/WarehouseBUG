@@ -74,12 +74,12 @@
     <div class="raw" id="raw-display"></div>
   </div>
 
-  <div class="note">
-    This only auto-updates <b>teams</b> and <b>score</b> — that's all the Warehouse Reference API
-    exposes for Blitzball today. Inning, top/bottom, outs, runners, pitcher, balls/strikes and pitch
-    count still need the Warehouse Reference platform to ship those fields (already requested in
-    warehouse-api-spec.md). Until then, run those from Singular's own control panel alongside this page:
-    <a href="https://app.singular.live/control/01O7PKtS6aK6o1b5epbjH6" target="_blank">app.singular.live/control/01O7PKtS6aK6o1b5epbjH6</a>
+  <div class="note" id="note">
+    Teams, score, inning, top/bottom, outs, runners, pitcher and count all auto-update from the
+    Warehouse Reference API now. If a team or pitcher name it returns isn't recognized (e.g. a
+    new-season roster name Singular's graphic hasn't been given a logo/headshot for yet), that
+    field is skipped rather than pushed blank, and a warning shows in the status box above —
+    add the missing name's image to the composition in Singular Studio, no code change needed.
   </div>
 </div>
 
@@ -113,6 +113,40 @@ const BOTTOM_TEAM_MAP = {
   'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4zeHRts4lzJ6zEhf5YzC3s_w1920h1080.png',
 };
 
+// 'Top or Bottom Inning' selection node — image per half-inning state.
+const HALF_INNING_MAP = {
+  'top': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tTgqcH9eI7MSofYJU9eeh_w1920h1080.png',
+  'bottom': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/51efEc65WJ3prxfYmk0cyy_w1920h1080.png',
+};
+
+// 'Pitcher Name' selection node — one image per pitcher on the roster.
+const PITCHER_MAP = {
+  "Jimmy O'Brien": 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0Uli0vdXr3oiHbNFXwn6xO_w1920h1080.png',
+  'Jake Storiale': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6mnpUzIoPbvh0bSRh8DQYb_w1920h1080.png',
+  "Luke O'Brien": 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1MWRY9DCPhy14pLYSs9Suj_w1920h1080.png',
+  'Bella Dayton': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2AzkjUNofDHASwTEzVR72Z_w1920h1080.png',
+  'Joez McFly': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2Kh8OdYkqGWRUaaOGMSWjr_w1920h1080.png',
+  'Lou Dab': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6q93VyR0VAtvkx7bPZxwmk_w1920h1080.png',
+  'Drew Davis': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5tEadkY6jJq9pOFrPRdVWJ_w1920h1080.png',
+  'Aleshia Ocasio': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2XtgT0yVxTtCD4Pjv8vjyL_w1920h1080.png',
+  'Trevor Plouffe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1fpu8xJ9kfdQDP85piI9gN_w1920h1080.png',
+  'Shelfy': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6r2SQU8ucXbrhxNlRXy22a_w1920h1080.png',
+  'Swilly': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/78YnVYbodtb04iR0W8S2iY_w1920h1080.png',
+  'Jadelyn Allchin': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/32YCFFJQZUA8Lmgk0NuQP7_w1920h1080.png',
+  'Kyle MacDonald': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5qvsKJ04wkBlTOktNxmI6j_w1920h1080.png',
+  'Ryan Cohen': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1jFDVnO2Wyhp9JMCFV3gfP_w1920h1080.png',
+  'Dalton Feely': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1AWptTUsbCzK251bBiWk7E_w1920h1080.png',
+  'Danieca Coffey': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6jHSFcyl4H5xtIzUxWZ9wD_w1920h1080.png',
+  'Jack Doyle': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/51iWEVPjGFAPG5he5rg3lk_w1920h1080.png',
+  'Zo DeMalia': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0FiQhfXC6RwsfIiaLz2Yqx_w1920h1080.png',
+  'Adam Bannon': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/68GpSE8EhoRZs9ZfjItyc0_w1920h1080.png',
+  'Alana Vawter': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0OK6qhl7djKTwCDeBf35Kx_w1920h1080.png',
+  'Dan Rourke': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/666a86SRKnhqiw1Q1bSWTF_w1920h1080.png',
+  'Jimmy Knorp': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/73cXrAMFWyAHY6ZPpe1XkD_w1920h1080.png',
+  'Jolly Olive': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1Lps9TqVXnHaX5UtRn5Hcw_w1920h1080.png',
+  'Tori Vidales': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5wwKCgFMqWiANgx5ZwpBta_w1920h1080.png',
+};
+
 var timer = null;
 var pollSeq = 0;
 
@@ -141,8 +175,24 @@ function showData(d, body) {
     '<div class="data-row"><span>Home Team</span><span>' + d.homeTeam + '</span></div>' +
     '<div class="data-row"><span>Away Team</span><span>' + d.awayTeam + '</span></div>' +
     '<div class="data-row"><span>Score</span><span>' + d.homeScore + ' – ' + d.awayScore + '</span></div>' +
+    '<div class="data-row"><span>Inning</span><span>' + d.topOrBottom + ' ' + d.inning + '</span></div>' +
+    '<div class="data-row"><span>Outs</span><span>' + d.outs + '</span></div>' +
+    '<div class="data-row"><span>Runners</span><span>' +
+      (d.runner1B ? '1st ' : '') + (d.runner2B ? '2nd ' : '') + (d.runner3B ? '3rd' : '') + '</span></div>' +
+    '<div class="data-row"><span>Pitcher</span><span>' + d.pitcherName + '</span></div>' +
+    '<div class="data-row"><span>Count / Pitches</span><span>' + d.balls + '-' + d.strikes + ' / ' + d.pitchCount + '</span></div>' +
     '<div class="data-row"><span>Last push</span><span>' + new Date().toLocaleTimeString() + '</span></div>';
   document.getElementById('raw-display').textContent = JSON.stringify(body, null, 2);
+}
+
+// Looks up `value` in `map`; returns the mapped image URL, or null (and records a warning)
+// if the platform sent a name Singular's graphic doesn't have an image for yet. Never pushes
+// an empty string — that would blank whatever the graphic is currently showing.
+function lookupOrWarn(map, value, label, warnings) {
+  var hit = map[value];
+  if (hit) return hit;
+  warnings.push(label + ' "' + value + '" not in Singular — add its image in Singular Studio');
+  return null;
 }
 
 async function poll() {
@@ -172,21 +222,40 @@ async function poll() {
     // Drop anything superseded by a poll that started later than this one.
     if (mySeq !== pollSeq) return;
 
+    var warnings = [];
+    var outs = parseInt(d.outs) || 0;
+
+    var teamsPayload = {};
+    var topTeamImg = lookupOrWarn(TOP_TEAM_MAP, d.homeTeam, 'Team', warnings);
+    var bottomTeamImg = lookupOrWarn(BOTTOM_TEAM_MAP, d.awayTeam, 'Team', warnings);
+    if (topTeamImg) teamsPayload['Top Team'] = topTeamImg;
+    if (bottomTeamImg) teamsPayload['Bottom Team'] = bottomTeamImg;
+
+    var batterPayload = {
+      'Top Score': parseInt(d.homeScore) || 0,
+      'Bottom Score': parseInt(d.awayScore) || 0,
+      'Inning': parseInt(d.inning) || 1,
+      '1 Out': outs >= 1,
+      '2 Outs': outs >= 2,
+      '1st': !!d.runner1B,
+      '2nd': !!d.runner2B,
+      '3rd': !!d.runner3B
+    };
+    var halfInningImg = lookupOrWarn(HALF_INNING_MAP, String(d.topOrBottom || '').toLowerCase(), 'Half-inning', warnings);
+    if (halfInningImg) batterPayload['Top or Bottom Inning'] = halfInningImg;
+
+    var pitcherPayload = {
+      'Balls': parseInt(d.balls) || 0,
+      'Strikes': parseInt(d.strikes) || 0,
+      'Pitch Count': parseInt(d.pitchCount) || 0
+    };
+    var pitcherImg = lookupOrWarn(PITCHER_MAP, d.pitcherName, 'Pitcher', warnings);
+    if (pitcherImg) pitcherPayload['Pitcher Name'] = pitcherImg;
+
     var body = [
-      {
-        subCompositionName: 'Teams',
-        payload: {
-          'Top Team': TOP_TEAM_MAP[d.homeTeam] || '',
-          'Bottom Team': BOTTOM_TEAM_MAP[d.awayTeam] || ''
-        }
-      },
-      {
-        subCompositionName: 'Batter',
-        payload: {
-          'Top Score': parseInt(d.homeScore) || 0,
-          'Bottom Score': parseInt(d.awayScore) || 0
-        }
-      }
+      { subCompositionName: 'Teams', payload: teamsPayload },
+      { subCompositionName: 'Batter', payload: batterPayload },
+      { subCompositionName: 'Pitcher', payload: pitcherPayload }
     ];
 
     var sRes = await fetch(SINGULAR_URL, {
@@ -199,7 +268,11 @@ async function poll() {
     if (mySeq !== pollSeq) return;
 
     showData(d, body);
-    setStatus('green', 'Updated · ' + new Date().toLocaleTimeString());
+    if (warnings.length) {
+      setStatus('yellow', 'Updated with warnings · ' + new Date().toLocaleTimeString() + ' — ' + warnings.join('; '));
+    } else {
+      setStatus('green', 'Updated · ' + new Date().toLocaleTimeString());
+    }
   } catch(e) {
     if (mySeq !== pollSeq) return;
     setStatus('red', 'Error: ' + e.message);
