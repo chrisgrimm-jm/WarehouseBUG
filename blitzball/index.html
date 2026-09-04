@@ -113,6 +113,14 @@ const BOTTOM_TEAM_MAP = {
   'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4zeHRts4lzJ6zEhf5YzC3s_w1920h1080.png',
 };
 
+// New-season roster names with no logo of their own in Singular yet — stand in with an
+// existing logo until the real one is added, per Chris (2026-09-04). Remove once Singular
+// has "The Shakey Snakes" / "The Baby James'" as their own selection options.
+TOP_TEAM_MAP["The Shakey Snakes"] = TOP_TEAM_MAP['Woogas'];
+TOP_TEAM_MAP["The Baby James'"] = TOP_TEAM_MAP['Baggage'];
+BOTTOM_TEAM_MAP["The Shakey Snakes"] = BOTTOM_TEAM_MAP['Woogas'];
+BOTTOM_TEAM_MAP["The Baby James'"] = BOTTOM_TEAM_MAP['Baggage'];
+
 // 'Top or Bottom Inning' selection node — image per half-inning state.
 const HALF_INNING_MAP = {
   'top': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tTgqcH9eI7MSofYJU9eeh_w1920h1080.png',
