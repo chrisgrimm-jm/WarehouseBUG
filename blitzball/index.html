@@ -100,20 +100,19 @@ var HALF_INNING_MAP = {};
 var PITCHER_MAP = {};
 var assetsLoaded = false;
 
-// Some names the live-data API sends don't exactly match Singular's option title for the
-// same team (e.g. API says "Baggage", Singular's option is titled "Team Baggage"; two
-// brand-new teams have no logo of their own yet and borrow one, per Chris 2026-09-04).
+// The live-data API's official name for that team is "Team Baggage" (confirmed by Chris,
+// 2026-09-09) — not the bare "Baggage" some earlier code guessed at, so no alias needed
+// there. Remaining aliases: capitalization variants Singular has used over time, plus two
+// brand-new teams with no logo of their own yet borrowing one (per Chris, 2026-09-04).
 // `to` is looked up AFTER the live load, so this always follows whatever Singular currently
 // has — only the "which name means which team" mapping needs to be hand-maintained.
 const TEAM_NAME_ALIASES = [
-  ['Baggage', 'Team Baggage'],
   ['Del Caribe', 'Caribe'],
   ['Caribe', 'Del Caribe'],
   ['MacFlurry Power', 'Macflurry Power'],
   ['Macflurry Power', 'MacFlurry Power'],
   ['The Shakey Snakes', 'Woogas'],
   ["The Baby James'", 'Team Baggage'],
-  ["The Baby James'", 'Baggage'],
 ];
 
 function applyTeamAliases(map) {
