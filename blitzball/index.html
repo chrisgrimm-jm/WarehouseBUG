@@ -67,6 +67,7 @@
 
   <button class="btn btn-start" id="start-btn" onclick="startPolling()">▶ Start</button>
   <button class="btn btn-stop" id="stop-btn" onclick="stopPolling()" style="display:none">■ Stop</button>
+  <button class="btn" id="refresh-assets-btn" onclick="refreshAssets()" style="background:#2a2a2a; color:#ccc;">↻ Refresh team/pitcher images from Singular</button>
 
   <div class="status" id="status">
     <span class="dot" id="dot"></span><span id="status-text">Not running</span>
@@ -76,10 +77,12 @@
 
   <div class="note" id="note">
     Teams, score, inning, top/bottom, outs, runners, pitcher and count all auto-update from the
-    Warehouse Reference API now. If a team or pitcher name it returns isn't recognized (e.g. a
-    new-season roster name Singular's graphic hasn't been given a logo/headshot for yet), that
-    field is skipped rather than pushed blank, and a warning shows in the status box above —
-    add the missing name's image to the composition in Singular Studio, no code change needed.
+    Warehouse Reference API now. Team/pitcher <b>images</b> are pulled live from Singular itself
+    (not hardcoded here), so a redesign or new asset in Singular Studio takes effect the next
+    time this page loads — or immediately if you hit "Refresh team/pitcher images" above, no
+    code change needed. If a name the API returns still isn't recognized (e.g. a new-season
+    roster name Singular has no image for at all yet), that field is skipped rather than pushed
+    blank, and a warning shows in the status box.
   </div>
 </div>
 
@@ -87,83 +90,73 @@
 const API_KEY        = '0cc72db4f44f9e7ad2de2fb3a48c295a71b252519b45c832';
 const SINGULAR_TOKEN = '01O7PKtS6aK6o1b5epbjH6';
 const SINGULAR_URL   = `https://app.singular.live/apiv2/controlapps/${SINGULAR_TOKEN}/control`;
+const SINGULAR_MODEL_URL = `https://app.singular.live/apiv2/controlapps/${SINGULAR_TOKEN}/model`;
 
-// Pulled straight from each selection node's own option list via
-// GET https://app.singular.live/apiv2/controlapps/{TOKEN}/model — Blitzball has the same
-// top/bottom image-flip quirk Floorball does, so don't "simplify" these into one shared map.
-// Refreshed 2026-09-09 after ~50 new assets were uploaded in Singular Studio and every
-// option below got repointed to a new image file (same option titles, new URLs). These
-// URLs are NOT a stable identifier across redesigns — if the bug's look changes again in
-// Studio without a matching update here, this file will keep pushing the old art back.
-const TOP_TEAM_MAP = {
-  'Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1k6xJTvHNxC5Y9GOQsaX0K_w1920h1080.png',
-  'Team Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1k6xJTvHNxC5Y9GOQsaX0K_w1920h1080.png',
-  'Del Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6rbYBnfvIZGhUgZX0MksyU_w1920h1080.png',
-  'Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6rbYBnfvIZGhUgZX0MksyU_w1920h1080.png',
-  'Forgotten Rotten': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4F3gKs1KPusl9C8MwHcrIr_w1920h1080.png',
-  'Macflurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2hLraUAFfpN50ijqJ8CJph_w1920h1080.png',
-  'MacFlurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2hLraUAFfpN50ijqJ8CJph_w1920h1080.png',
-  'We Got Ice': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0AWGWtZVD4mE03Q8mnZysP_w1920h1080.png',
-  'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2lQfnX5HuEG809ECmMhmB2_w1920h1080.png',
-  'Hopeful Winners': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3CQSPvWv1U4slCcXFiEj4B_w1920h1080.png',
-  'Potential Losers': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3pFQCV2a2iANqRbJa2EWa9_w1920h1080.png',
-};
+// Title -> image URL for each selection node, loaded live from Singular (see loadAssetMaps)
+// instead of hardcoded, so a redesign in Singular Studio doesn't require a code change here.
+var TOP_TEAM_MAP = {};
+var BOTTOM_TEAM_MAP = {};
+var HALF_INNING_MAP = {};
+var PITCHER_MAP = {};
+var assetsLoaded = false;
 
-const BOTTOM_TEAM_MAP = {
-  'Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7D95ySPAS76ADvoXw0rtnF_w1920h1080.png',
-  'Team Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7D95ySPAS76ADvoXw0rtnF_w1920h1080.png',
-  'Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7AlFyttjjdrsHOMj2QRQ7B_w1920h1080.png',
-  'Del Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7AlFyttjjdrsHOMj2QRQ7B_w1920h1080.png',
-  'Forgotten Rotten': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7eOxiHrsybWez27qCnuCVg_w1920h1080.png',
-  'Macflurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5Wgz4PIiZKSr2nyqfRG6nV_w1920h1080.png',
-  'MacFlurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5Wgz4PIiZKSr2nyqfRG6nV_w1920h1080.png',
-  'We Got Ice': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/03rkGT56bZCRjdLzEK0R1q_w1920h1080.png',
-  'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4sl9vmvcIc9Y0vg1ANl3pV_w1920h1080.png',
-  'Potential Losers': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5ykDnn2kEuWyW7M9baiuO9_w1920h1080.png',
-  'Hopeful Winners': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2H9bHij7ju5vXNx0Z8dYwT_w1920h1080.png',
-};
+// Some names the live-data API sends don't exactly match Singular's option title for the
+// same team (e.g. API says "Baggage", Singular's option is titled "Team Baggage"; two
+// brand-new teams have no logo of their own yet and borrow one, per Chris 2026-09-04).
+// `to` is looked up AFTER the live load, so this always follows whatever Singular currently
+// has — only the "which name means which team" mapping needs to be hand-maintained.
+const TEAM_NAME_ALIASES = [
+  ['Baggage', 'Team Baggage'],
+  ['Del Caribe', 'Caribe'],
+  ['Caribe', 'Del Caribe'],
+  ['MacFlurry Power', 'Macflurry Power'],
+  ['Macflurry Power', 'MacFlurry Power'],
+  ['The Shakey Snakes', 'Woogas'],
+  ["The Baby James'", 'Team Baggage'],
+  ["The Baby James'", 'Baggage'],
+];
 
-// New-season roster names with no logo of their own in Singular yet — stand in with an
-// existing logo until the real one is added, per Chris (2026-09-04). Remove once Singular
-// has "The Shakey Snakes" / "The Baby James'" as their own selection options.
-TOP_TEAM_MAP["The Shakey Snakes"] = TOP_TEAM_MAP['Woogas'];
-TOP_TEAM_MAP["The Baby James'"] = TOP_TEAM_MAP['Baggage'];
-BOTTOM_TEAM_MAP["The Shakey Snakes"] = BOTTOM_TEAM_MAP['Woogas'];
-BOTTOM_TEAM_MAP["The Baby James'"] = BOTTOM_TEAM_MAP['Baggage'];
+function applyTeamAliases(map) {
+  TEAM_NAME_ALIASES.forEach(function(pair) {
+    if (map[pair[1]] !== undefined) map[pair[0]] = map[pair[1]];
+  });
+}
 
-// 'Top or Bottom Inning' selection node — image per half-inning state.
-const HALF_INNING_MAP = {
-  'top': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1VcP6gpr8qURPnojRmXkE5_w1920h1080.png',
-  'bottom': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4qMpI4g3FzIZr2HDsniN1G_w1920h1080.png',
-};
+// Pulls the current title -> image URL for every selection node straight from Singular.
+async function loadAssetMaps() {
+  var res = await fetch(SINGULAR_MODEL_URL, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Singular model ' + res.status);
+  var model = await res.json();
+  var subs = model[0].subcompositions;
+  function selMap(subName, fieldId) {
+    var sub = subs.find(function(s) { return s.name === subName; });
+    var field = sub.model.find(function(f) { return f.id === fieldId; });
+    var map = {};
+    field.selections.forEach(function(s) { map[s.title] = s.id; });
+    return map;
+  }
+  TOP_TEAM_MAP = selMap('Teams', 'Top Team');
+  BOTTOM_TEAM_MAP = selMap('Teams', 'Bottom Team');
+  var halfRaw = selMap('Batter', 'Top or Bottom Inning');
+  HALF_INNING_MAP = { 'top': halfRaw['Top Inning'], 'bottom': halfRaw['Bottom Inning'] };
+  PITCHER_MAP = selMap('Pitcher', 'Pitcher Name');
+  applyTeamAliases(TOP_TEAM_MAP);
+  applyTeamAliases(BOTTOM_TEAM_MAP);
+  assetsLoaded = true;
+}
 
-// 'Pitcher Name' selection node — one image per pitcher on the roster.
-const PITCHER_MAP = {
-  "Jimmy O'Brien": 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6ZdKifhFDiQrnr9cajxcgh_w1920h1080.png',
-  'Jake Storiale': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5jj1zyhtV6uy7GLwrBHlap_w1920h1080.png',
-  "Luke O'Brien": 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5sjid5zsVPu6buygV5hYOE_w1920h1080.png',
-  'Bella Dayton': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2AzkjUNofDHASwTEzVR72Z_w1920h1080.png',
-  'Joez McFly': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6KyrzPUZOj9K3FIhczpaRV_w1920h1080.png',
-  'Lou Dab': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2ksem8bnWBu66bnsBBqUpJ_w1920h1080.png',
-  'Drew Davis': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2zQeHNIWoRbnai3FHDVI1E_w1920h1080.png',
-  'Aleshia Ocasio': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2XtgT0yVxTtCD4Pjv8vjyL_w1920h1080.png',
-  'Trevor Plouffe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5fFhvCViilHAgDH7SuY0IW_w1920h1080.png',
-  'Shelfy': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6SAf5q5xVi1fvdlVBpGKDD_w1920h1080.png',
-  'Swilly': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1QjowXZJjp5M6P8CP33sFr_w1920h1080.png',
-  'Jadelyn Allchin': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/32YCFFJQZUA8Lmgk0NuQP7_w1920h1080.png',
-  'Kyle MacDonald': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7JbvaIo5ONh0xXo2Ke1eSw_w1920h1080.png',
-  'Ryan Cohen': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/30Llhye2xj47BC88aI68KN_w1920h1080.png',
-  'Dalton Feely': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3vTKZi6zxEtbRMe07EZcfM_w1920h1080.png',
-  'Danieca Coffey': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6jHSFcyl4H5xtIzUxWZ9wD_w1920h1080.png',
-  'Jack Doyle': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7pSDYSdCXNLcLI0KKloqSB_w1920h1080.png',
-  'Zo DeMalia': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0cMU795wwionjXerLn8Kru_w1920h1080.png',
-  'Adam Bannon': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2BetcS9VeWf1cjvSVILNNp_w1920h1080.png',
-  'Alana Vawter': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0OK6qhl7djKTwCDeBf35Kx_w1920h1080.png',
-  'Dan Rourke': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7hjZyfBXkH6WFEYYGMWQQM_w1920h1080.png',
-  'Jimmy Knorp': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4sgBqEoqA4FKO2gp0SRA1d_w1920h1080.png',
-  'Jolly Olive': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7DheGbFhGwArYZTkklR8GU_w1920h1080.png',
-  'Tori Vidales': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5wwKCgFMqWiANgx5ZwpBta_w1920h1080.png',
-};
+async function refreshAssets() {
+  setStatus('yellow', 'Refreshing team/pitcher images from Singular...');
+  try {
+    await loadAssetMaps();
+    setStatus('green', 'Refreshed team/pitcher images · ' + new Date().toLocaleTimeString());
+  } catch (e) {
+    setStatus('red', 'Refresh failed: ' + e.message);
+  }
+}
+
+// Load once on page open so images are ready before anyone hits Start.
+loadAssetMaps().catch(function(e) { setStatus('red', 'Could not load Singular images: ' + e.message); });
 
 var timer = null;
 var pollSeq = 0;
@@ -297,10 +290,14 @@ async function poll() {
   }
 }
 
-function startPolling() {
+async function startPolling() {
   var interval = parseInt(document.getElementById('interval').value) * 1000;
   document.getElementById('start-btn').style.display = 'none';
   document.getElementById('stop-btn').style.display = 'block';
+  if (!assetsLoaded) {
+    setStatus('yellow', 'Waiting on team/pitcher images from Singular...');
+    try { await loadAssetMaps(); } catch (e) { /* poll() will surface lookup warnings either way */ }
+  }
   poll();
   timer = setInterval(poll, interval);
 }
