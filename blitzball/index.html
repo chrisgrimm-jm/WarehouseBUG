@@ -91,28 +91,36 @@ const SINGULAR_URL   = `https://app.singular.live/apiv2/controlapps/${SINGULAR_T
 // Pulled straight from each selection node's own option list via
 // GET https://app.singular.live/apiv2/controlapps/{TOKEN}/model — Blitzball has the same
 // top/bottom image-flip quirk Floorball does, so don't "simplify" these into one shared map.
+// Refreshed 2026-09-09 after ~50 new assets were uploaded in Singular Studio and every
+// option below got repointed to a new image file (same option titles, new URLs). These
+// URLs are NOT a stable identifier across redesigns — if the bug's look changes again in
+// Studio without a matching update here, this file will keep pushing the old art back.
 const TOP_TEAM_MAP = {
-  'Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3wWmOZrn6CPgtCyXpUXaS9_w1920h1080.png',
-  'Team Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3wWmOZrn6CPgtCyXpUXaS9_w1920h1080.png',
-  'Del Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tg7gKy8mANBTwAmFoMK6f_w1920h1080.png',
-  'Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tg7gKy8mANBTwAmFoMK6f_w1920h1080.png',
-  'Forgotten Rotten': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2wjkgIOTFKkyUtVRDx16yj_w1920h1080.png',
-  'Macflurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7tB7tTpbnG2PBRapju65d0_w1920h1080.png',
-  'MacFlurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7tB7tTpbnG2PBRapju65d0_w1920h1080.png',
-  'We Got Ice': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4TuNnznwXwxRh1rum9nawh_w1920h1080.png',
-  'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0F3VUjgNhZFRZziSmjFBX0_w1920h1080.png',
+  'Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1k6xJTvHNxC5Y9GOQsaX0K_w1920h1080.png',
+  'Team Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1k6xJTvHNxC5Y9GOQsaX0K_w1920h1080.png',
+  'Del Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6rbYBnfvIZGhUgZX0MksyU_w1920h1080.png',
+  'Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6rbYBnfvIZGhUgZX0MksyU_w1920h1080.png',
+  'Forgotten Rotten': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4F3gKs1KPusl9C8MwHcrIr_w1920h1080.png',
+  'Macflurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2hLraUAFfpN50ijqJ8CJph_w1920h1080.png',
+  'MacFlurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2hLraUAFfpN50ijqJ8CJph_w1920h1080.png',
+  'We Got Ice': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0AWGWtZVD4mE03Q8mnZysP_w1920h1080.png',
+  'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2lQfnX5HuEG809ECmMhmB2_w1920h1080.png',
+  'Hopeful Winners': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3CQSPvWv1U4slCcXFiEj4B_w1920h1080.png',
+  'Potential Losers': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3pFQCV2a2iANqRbJa2EWa9_w1920h1080.png',
 };
 
 const BOTTOM_TEAM_MAP = {
-  'Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0bCWsxI7pm3knqvnYe0xXV_w1920h1080.png',
-  'Team Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0bCWsxI7pm3knqvnYe0xXV_w1920h1080.png',
-  'Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3eNNs9lEHpNL4yN1xS8FG8_w1920h1080.png',
-  'Del Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3eNNs9lEHpNL4yN1xS8FG8_w1920h1080.png',
-  'Forgotten Rotten': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2V2QAhDmACEQTBshZDeKPZ_w1920h1080.png',
-  'Macflurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/09J8TqzEv70KD4NPIJV5kC_w1920h1080.png',
-  'MacFlurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/09J8TqzEv70KD4NPIJV5kC_w1920h1080.png',
-  'We Got Ice': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0960eleEbcB5pehpwo8McS_w1920h1080.png',
-  'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4zeHRts4lzJ6zEhf5YzC3s_w1920h1080.png',
+  'Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7D95ySPAS76ADvoXw0rtnF_w1920h1080.png',
+  'Team Baggage': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7D95ySPAS76ADvoXw0rtnF_w1920h1080.png',
+  'Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7AlFyttjjdrsHOMj2QRQ7B_w1920h1080.png',
+  'Del Caribe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7AlFyttjjdrsHOMj2QRQ7B_w1920h1080.png',
+  'Forgotten Rotten': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7eOxiHrsybWez27qCnuCVg_w1920h1080.png',
+  'Macflurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5Wgz4PIiZKSr2nyqfRG6nV_w1920h1080.png',
+  'MacFlurry Power': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5Wgz4PIiZKSr2nyqfRG6nV_w1920h1080.png',
+  'We Got Ice': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/03rkGT56bZCRjdLzEK0R1q_w1920h1080.png',
+  'Woogas': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4sl9vmvcIc9Y0vg1ANl3pV_w1920h1080.png',
+  'Potential Losers': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5ykDnn2kEuWyW7M9baiuO9_w1920h1080.png',
+  'Hopeful Winners': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2H9bHij7ju5vXNx0Z8dYwT_w1920h1080.png',
 };
 
 // New-season roster names with no logo of their own in Singular yet — stand in with an
@@ -125,35 +133,35 @@ BOTTOM_TEAM_MAP["The Baby James'"] = BOTTOM_TEAM_MAP['Baggage'];
 
 // 'Top or Bottom Inning' selection node — image per half-inning state.
 const HALF_INNING_MAP = {
-  'top': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0tTgqcH9eI7MSofYJU9eeh_w1920h1080.png',
-  'bottom': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/51efEc65WJ3prxfYmk0cyy_w1920h1080.png',
+  'top': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1VcP6gpr8qURPnojRmXkE5_w1920h1080.png',
+  'bottom': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4qMpI4g3FzIZr2HDsniN1G_w1920h1080.png',
 };
 
 // 'Pitcher Name' selection node — one image per pitcher on the roster.
 const PITCHER_MAP = {
-  "Jimmy O'Brien": 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0Uli0vdXr3oiHbNFXwn6xO_w1920h1080.png',
-  'Jake Storiale': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6mnpUzIoPbvh0bSRh8DQYb_w1920h1080.png',
-  "Luke O'Brien": 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1MWRY9DCPhy14pLYSs9Suj_w1920h1080.png',
+  "Jimmy O'Brien": 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6ZdKifhFDiQrnr9cajxcgh_w1920h1080.png',
+  'Jake Storiale': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5jj1zyhtV6uy7GLwrBHlap_w1920h1080.png',
+  "Luke O'Brien": 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5sjid5zsVPu6buygV5hYOE_w1920h1080.png',
   'Bella Dayton': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2AzkjUNofDHASwTEzVR72Z_w1920h1080.png',
-  'Joez McFly': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2Kh8OdYkqGWRUaaOGMSWjr_w1920h1080.png',
-  'Lou Dab': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6q93VyR0VAtvkx7bPZxwmk_w1920h1080.png',
-  'Drew Davis': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5tEadkY6jJq9pOFrPRdVWJ_w1920h1080.png',
+  'Joez McFly': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6KyrzPUZOj9K3FIhczpaRV_w1920h1080.png',
+  'Lou Dab': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2ksem8bnWBu66bnsBBqUpJ_w1920h1080.png',
+  'Drew Davis': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2zQeHNIWoRbnai3FHDVI1E_w1920h1080.png',
   'Aleshia Ocasio': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2XtgT0yVxTtCD4Pjv8vjyL_w1920h1080.png',
-  'Trevor Plouffe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1fpu8xJ9kfdQDP85piI9gN_w1920h1080.png',
-  'Shelfy': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6r2SQU8ucXbrhxNlRXy22a_w1920h1080.png',
-  'Swilly': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/78YnVYbodtb04iR0W8S2iY_w1920h1080.png',
+  'Trevor Plouffe': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5fFhvCViilHAgDH7SuY0IW_w1920h1080.png',
+  'Shelfy': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6SAf5q5xVi1fvdlVBpGKDD_w1920h1080.png',
+  'Swilly': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1QjowXZJjp5M6P8CP33sFr_w1920h1080.png',
   'Jadelyn Allchin': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/32YCFFJQZUA8Lmgk0NuQP7_w1920h1080.png',
-  'Kyle MacDonald': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5qvsKJ04wkBlTOktNxmI6j_w1920h1080.png',
-  'Ryan Cohen': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1jFDVnO2Wyhp9JMCFV3gfP_w1920h1080.png',
-  'Dalton Feely': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1AWptTUsbCzK251bBiWk7E_w1920h1080.png',
+  'Kyle MacDonald': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7JbvaIo5ONh0xXo2Ke1eSw_w1920h1080.png',
+  'Ryan Cohen': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/30Llhye2xj47BC88aI68KN_w1920h1080.png',
+  'Dalton Feely': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/3vTKZi6zxEtbRMe07EZcfM_w1920h1080.png',
   'Danieca Coffey': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/6jHSFcyl4H5xtIzUxWZ9wD_w1920h1080.png',
-  'Jack Doyle': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/51iWEVPjGFAPG5he5rg3lk_w1920h1080.png',
-  'Zo DeMalia': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0FiQhfXC6RwsfIiaLz2Yqx_w1920h1080.png',
-  'Adam Bannon': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/68GpSE8EhoRZs9ZfjItyc0_w1920h1080.png',
+  'Jack Doyle': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7pSDYSdCXNLcLI0KKloqSB_w1920h1080.png',
+  'Zo DeMalia': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0cMU795wwionjXerLn8Kru_w1920h1080.png',
+  'Adam Bannon': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/2BetcS9VeWf1cjvSVILNNp_w1920h1080.png',
   'Alana Vawter': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/0OK6qhl7djKTwCDeBf35Kx_w1920h1080.png',
-  'Dan Rourke': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/666a86SRKnhqiw1Q1bSWTF_w1920h1080.png',
-  'Jimmy Knorp': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/73cXrAMFWyAHY6ZPpe1XkD_w1920h1080.png',
-  'Jolly Olive': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/1Lps9TqVXnHaX5UtRn5Hcw_w1920h1080.png',
+  'Dan Rourke': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7hjZyfBXkH6WFEYYGMWQQM_w1920h1080.png',
+  'Jimmy Knorp': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/4sgBqEoqA4FKO2gp0SRA1d_w1920h1080.png',
+  'Jolly Olive': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/7DheGbFhGwArYZTkklR8GU_w1920h1080.png',
   'Tori Vidales': 'https://image.singular.live/50f161512752f8a0d694a25ca16783ee/images/5wwKCgFMqWiANgx5ZwpBta_w1920h1080.png',
 };
 
