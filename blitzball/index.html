@@ -35,10 +35,6 @@
   .data-row { display: flex; justify-content: space-between; color: #777; font-size: 11px; padding: 3px 0; border-bottom: 1px solid #1e1e1e; }
   .data-row span:last-child { color: #ccc; }
   .raw { margin-top: 12px; padding: 10px; background: #0a0a0a; border-radius: 6px; font-size: 10px; color: #666; word-break: break-all; max-height: 120px; overflow-y: auto; }
-  .override-row { display: flex; gap: 6px; align-items: center; margin-top: 8px; padding: 8px; background: #241a0a; border: 1px solid #4a3510; border-radius: 6px; }
-  .override-row span { font-size: 11px; color: #eab308; flex-shrink: 0; }
-  .override-row select { flex: 1; background: #111; color: #eee; border: 1px solid #2a2a2a; border-radius: 4px; font-family: inherit; font-size: 11px; padding: 4px; }
-  .override-row button { background: #eab308; color: #000; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
   .note { margin-top: 16px; padding: 12px; border-radius: 8px; background: #1f1a0a; border: 1px solid #3a2f10; font-size: 11px; line-height: 1.6; color: #d4b45a; }
   .note a { color: #eab308; }
 </style>
@@ -76,7 +72,6 @@
   <div class="status" id="status">
     <span class="dot" id="dot"></span><span id="status-text">Not running</span>
     <div id="data-display" style="margin-top:10px;"></div>
-    <div id="override-pickers"></div>
     <div class="raw" id="raw-display"></div>
   </div>
 
@@ -85,10 +80,11 @@
     Warehouse Reference API now. Team/pitcher <b>images</b> are pulled live from Singular itself
     (not hardcoded here), so a redesign or new asset in Singular Studio takes effect the next
     time this page loads — or immediately if you hit "Refresh team/pitcher images" above, no
-    code change needed. If a team name the API returns has no logo in Singular at all (a
-    brand-new roster name), a picker appears in the status box above letting you point it at an
-    existing team's logo as a stand-in — that choice is saved in this browser and reused
-    automatically from then on.
+    code change needed. If a team or pitcher name the API returns has no logo in Singular yet
+    (e.g. a brand-new roster name), that field is skipped rather than pushed blank, and a
+    warning shows above — set it manually via Singular's own control panel
+    (<a href="https://app.singular.live/control/01O7PKtS6aK6o1b5epbjH6" target="_blank">app.singular.live/control/01O7PKtS6aK6o1b5epbjH6</a>)
+    until Singular has a real logo for it; this page won't overwrite whatever you pick there.
   </div>
 </div>
 
@@ -104,7 +100,6 @@ var TOP_TEAM_MAP = {};
 var BOTTOM_TEAM_MAP = {};
 var HALF_INNING_MAP = {};
 var PITCHER_MAP = {};
-var KNOWN_TEAM_NAMES = [];
 var assetsLoaded = false;
 
 // The live-data API's official name for that team is "Team Baggage" (confirmed by Chris,
@@ -118,17 +113,6 @@ const TEAM_NAME_ALIASES = [
   ['MacFlurry Power', 'Macflurry Power'],
   ['Macflurry Power', 'MacFlurry Power'],
 ];
-
-// A team name the live-data API sends that has no logo in Singular at all yet (a brand new
-// roster name) gets manually pointed at an existing team's logo instead, chosen live from the
-// status box below, rather than needing a code change every time a new team shows up. Saved
-// to localStorage so the choice survives a page reload.
-var TEAM_OVERRIDES = {};
-try { TEAM_OVERRIDES = JSON.parse(localStorage.getItem('blitzballTeamOverrides') || '{}'); } catch (e) {}
-function setTeamOverride(rawName, useTeam) {
-  TEAM_OVERRIDES[rawName] = useTeam;
-  try { localStorage.setItem('blitzballTeamOverrides', JSON.stringify(TEAM_OVERRIDES)); } catch (e) {}
-}
 
 function applyTeamAliases(map) {
   TEAM_NAME_ALIASES.forEach(function(pair) {
@@ -151,7 +135,6 @@ async function loadAssetMaps() {
   }
   TOP_TEAM_MAP = selMap('Teams', 'Top Team');
   BOTTOM_TEAM_MAP = selMap('Teams', 'Bottom Team');
-  KNOWN_TEAM_NAMES = Object.keys(BOTTOM_TEAM_MAP); // the real Singular titles, before aliases are layered on
   var halfRaw = selMap('Batter', 'Top or Bottom Inning');
   HALF_INNING_MAP = { 'top': halfRaw['Top Inning'], 'bottom': halfRaw['Bottom Inning'] };
   PITCHER_MAP = selMap('Pitcher', 'Pitcher Name');
@@ -221,49 +204,6 @@ function lookupOrWarn(map, value, label, warnings) {
   return null;
 }
 
-// Same as lookupOrWarn, but for team names specifically: checks a manual override first
-// (set via the picker in the status box) before falling back to a real Singular option.
-// Tracks anything still unresolved in `unresolvedTeams` so a picker can be offered for it.
-function lookupTeam(map, rawName, warnings, unresolvedTeams) {
-  var useName = TEAM_OVERRIDES[rawName] || rawName;
-  var hit = map[useName];
-  if (hit) return hit;
-  unresolvedTeams.push(rawName);
-  warnings.push('Team "' + rawName + '" not in Singular — pick a stand-in below');
-  return null;
-}
-
-var currentUnresolvedTeams = [];
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, function(c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
-}
-
-function renderOverridePickers(unresolvedTeams) {
-  currentUnresolvedTeams = unresolvedTeams;
-  var container = document.getElementById('override-pickers');
-  if (!unresolvedTeams.length || !KNOWN_TEAM_NAMES.length) { container.innerHTML = ''; return; }
-  container.innerHTML = unresolvedTeams.map(function(rawName, i) {
-    var options = KNOWN_TEAM_NAMES.map(function(name) {
-      return '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>';
-    }).join('');
-    return '<div class="override-row">' +
-      '<span>"' + escapeHtml(rawName) + '" →</span>' +
-      '<select id="override-select-' + i + '">' + options + '</select>' +
-      '<button onclick="applyOverridePicker(' + i + ')">Use this</button>' +
-      '</div>';
-  }).join('');
-}
-
-function applyOverridePicker(i) {
-  var rawName = currentUnresolvedTeams[i];
-  var chosen = document.getElementById('override-select-' + i).value;
-  setTeamOverride(rawName, chosen);
-  poll();
-}
-
 async function poll() {
   var mySeq = ++pollSeq;
   var isManual = document.getElementById('mode-manual').checked;
@@ -292,15 +232,13 @@ async function poll() {
     if (mySeq !== pollSeq) return;
 
     var warnings = [];
-    var unresolvedTeams = [];
     var outs = parseInt(d.outs) || 0;
 
     var teamsPayload = {};
-    var topTeamImg = lookupTeam(TOP_TEAM_MAP, d.homeTeam, warnings, unresolvedTeams);
-    var bottomTeamImg = lookupTeam(BOTTOM_TEAM_MAP, d.awayTeam, warnings, unresolvedTeams);
+    var topTeamImg = lookupOrWarn(TOP_TEAM_MAP, d.homeTeam, 'Team', warnings);
+    var bottomTeamImg = lookupOrWarn(BOTTOM_TEAM_MAP, d.awayTeam, 'Team', warnings);
     if (topTeamImg) teamsPayload['Top Team'] = topTeamImg;
     if (bottomTeamImg) teamsPayload['Bottom Team'] = bottomTeamImg;
-    renderOverridePickers(unresolvedTeams);
 
     var batterPayload = {
       'Top Score': parseInt(d.homeScore) || 0,
