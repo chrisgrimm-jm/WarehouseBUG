@@ -65,6 +65,21 @@
     <input type="number" id="interval" value="3" min="1" max="30" />
   </div>
 
+  <div class="field">
+    <label>Auto-send to Singular</label>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <label style="display:flex; align-items:center; gap:6px; font-size:11px; text-transform:none; letter-spacing:0; color:#ccc; cursor:pointer;">
+        <input type="checkbox" id="auto-teams" checked style="width:auto;" onchange="saveAutoToggles()"> Teams
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:11px; text-transform:none; letter-spacing:0; color:#ccc; cursor:pointer;">
+        <input type="checkbox" id="auto-batter" checked style="width:auto;" onchange="saveAutoToggles()"> Batter
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:11px; text-transform:none; letter-spacing:0; color:#ccc; cursor:pointer;">
+        <input type="checkbox" id="auto-pitcher" checked style="width:auto;" onchange="saveAutoToggles()"> Pitcher
+      </label>
+    </div>
+  </div>
+
   <button class="btn btn-start" id="start-btn" onclick="startPolling()">▶ Start</button>
   <button class="btn btn-stop" id="stop-btn" onclick="stopPolling()" style="display:none">■ Stop</button>
   <button class="btn" id="refresh-assets-btn" onclick="refreshAssets()" style="background:#2a2a2a; color:#ccc;">↻ Refresh team/pitcher images from Singular</button>
@@ -85,6 +100,9 @@
     warning shows above — set it manually via Singular's own control panel
     (<a href="https://app.singular.live/control/01O7PKtS6aK6o1b5epbjH6" target="_blank">app.singular.live/control/01O7PKtS6aK6o1b5epbjH6</a>)
     until Singular has a real logo for it; this page won't overwrite whatever you pick there.
+    Uncheck Teams/Batter/Pitcher above to stop this page from touching that sub-composition at
+    all — use that if you need to take over a section manually in Singular's control panel
+    without this page fighting you on the next poll. Choice is saved in this browser.
   </div>
 </div>
 
@@ -155,6 +173,25 @@ async function refreshAssets() {
 
 // Load once on page open so images are ready before anyone hits Start.
 loadAssetMaps().catch(function(e) { setStatus('red', 'Could not load Singular images: ' + e.message); });
+
+// Per-section on/off switches so a section can be handed over to Singular's own control panel
+// mid-broadcast (e.g. something's wrong with one section) without stopping everything else.
+function loadAutoToggles() {
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem('blitzballAutoToggles') || '{}'); } catch (e) {}
+  document.getElementById('auto-teams').checked = saved.teams !== false;
+  document.getElementById('auto-batter').checked = saved.batter !== false;
+  document.getElementById('auto-pitcher').checked = saved.pitcher !== false;
+}
+function saveAutoToggles() {
+  var state = {
+    teams: document.getElementById('auto-teams').checked,
+    batter: document.getElementById('auto-batter').checked,
+    pitcher: document.getElementById('auto-pitcher').checked
+  };
+  try { localStorage.setItem('blitzballAutoToggles', JSON.stringify(state)); } catch (e) {}
+}
+loadAutoToggles();
 
 var timer = null;
 var pollSeq = 0;
@@ -234,58 +271,74 @@ async function poll() {
     if (mySeq !== pollSeq) return;
 
     var warnings = [];
+    var pausedSections = [];
     var outs = parseInt(d.outs) || 0;
+    var body = [];
 
     // Away team bats in the top of the inning, home team in the bottom — matches
     // "topOrBottom" below. Was backwards (home->Top, away->Bottom) per Chris, 2026-09-16.
-    var teamsPayload = {};
-    var topTeamImg = lookupOrWarn(TOP_TEAM_MAP, d.awayTeam, 'Team', warnings);
-    var bottomTeamImg = lookupOrWarn(BOTTOM_TEAM_MAP, d.homeTeam, 'Team', warnings);
-    if (topTeamImg) teamsPayload['Top Team'] = topTeamImg;
-    if (bottomTeamImg) teamsPayload['Bottom Team'] = bottomTeamImg;
+    if (document.getElementById('auto-teams').checked) {
+      var teamsPayload = {};
+      var topTeamImg = lookupOrWarn(TOP_TEAM_MAP, d.awayTeam, 'Team', warnings);
+      var bottomTeamImg = lookupOrWarn(BOTTOM_TEAM_MAP, d.homeTeam, 'Team', warnings);
+      if (topTeamImg) teamsPayload['Top Team'] = topTeamImg;
+      if (bottomTeamImg) teamsPayload['Bottom Team'] = bottomTeamImg;
+      body.push({ subCompositionName: 'Teams', payload: teamsPayload });
+    } else {
+      pausedSections.push('Teams');
+    }
 
-    var batterPayload = {
-      'Top Score': parseInt(d.awayScore) || 0,
-      'Bottom Score': parseInt(d.homeScore) || 0,
-      'Inning': parseInt(d.inning) || 1,
-      '1 Out': outs >= 1,
-      '2 Outs': outs >= 2,
-      '1st': !!d.runner1B,
-      '2nd': !!d.runner2B,
-      '3rd': !!d.runner3B
-    };
-    var halfInningImg = lookupOrWarn(HALF_INNING_MAP, String(d.topOrBottom || '').toLowerCase(), 'Half-inning', warnings);
-    if (halfInningImg) batterPayload['Top or Bottom Inning'] = halfInningImg;
+    if (document.getElementById('auto-batter').checked) {
+      var batterPayload = {
+        'Top Score': parseInt(d.awayScore) || 0,
+        'Bottom Score': parseInt(d.homeScore) || 0,
+        'Inning': parseInt(d.inning) || 1,
+        '1 Out': outs >= 1,
+        '2 Outs': outs >= 2,
+        '1st': !!d.runner1B,
+        '2nd': !!d.runner2B,
+        '3rd': !!d.runner3B
+      };
+      // The platform doesn't populate topOrBottom (or inning) until the game's first pitch is
+      // actually thrown -- same gap as pitcher lag. Every game unambiguously starts at the top
+      // of the 1st, so default to that instead of leaving a stale value from a prior game/test
+      // showing, the same way Inning already defaults to 1 above.
+      var topOrBottomRaw = d.topOrBottom ? String(d.topOrBottom).toLowerCase() : 'top';
+      var halfInningImg = lookupOrWarn(HALF_INNING_MAP, topOrBottomRaw, 'Half-inning', warnings);
+      if (halfInningImg) batterPayload['Top or Bottom Inning'] = halfInningImg;
+      body.push({ subCompositionName: 'Batter', payload: batterPayload });
+    } else {
+      pausedSections.push('Batter');
+    }
 
-    var pitcherPayload = {
-      'Balls': parseInt(d.balls) || 0,
-      'Strikes': parseInt(d.strikes) || 0,
-      'Pitch Count': parseInt(d.pitchCount) || 0
-    };
-    var pitcherImg = lookupOrWarn(PITCHER_MAP, d.pitcherName, 'Pitcher', warnings);
-    if (pitcherImg) pitcherPayload['Pitcher Name'] = pitcherImg;
+    if (document.getElementById('auto-pitcher').checked) {
+      var pitcherPayload = {
+        'Balls': parseInt(d.balls) || 0,
+        'Strikes': parseInt(d.strikes) || 0,
+        'Pitch Count': parseInt(d.pitchCount) || 0
+      };
+      var pitcherImg = lookupOrWarn(PITCHER_MAP, d.pitcherName, 'Pitcher', warnings);
+      if (pitcherImg) pitcherPayload['Pitcher Name'] = pitcherImg;
+      body.push({ subCompositionName: 'Pitcher', payload: pitcherPayload });
+    } else {
+      pausedSections.push('Pitcher');
+    }
 
-    var body = [
-      { subCompositionName: 'Teams', payload: teamsPayload },
-      { subCompositionName: 'Batter', payload: batterPayload },
-      { subCompositionName: 'Pitcher', payload: pitcherPayload }
-    ];
-
-    var sRes = await fetch(SINGULAR_URL, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    if (!sRes.ok) throw new Error('Singular ' + sRes.status);
+    if (body.length) {
+      var sRes = await fetch(SINGULAR_URL, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!sRes.ok) throw new Error('Singular ' + sRes.status);
+    }
     if (mySeq !== pollSeq) return;
 
     showData(d, body);
-    if (warnings.length) {
-      setStatus('yellow', 'Updated with warnings · ' + new Date().toLocaleTimeString() + ' — ' + warnings.join('; '));
-    } else {
-      setStatus('green', 'Updated · ' + new Date().toLocaleTimeString());
-    }
+    var statusMsg = 'Updated · ' + new Date().toLocaleTimeString();
+    if (pausedSections.length) statusMsg += ' — Paused: ' + pausedSections.join(', ');
+    if (warnings.length) statusMsg += ' — ' + warnings.join('; ');
+    setStatus(warnings.length || pausedSections.length ? 'yellow' : 'green', statusMsg);
   } catch(e) {
     if (mySeq !== pollSeq) return;
     setStatus('red', 'Error: ' + e.message);
