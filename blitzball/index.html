@@ -179,17 +179,19 @@ function setStatus(state, text) {
   document.getElementById('status-text').textContent = text;
 }
 
+function orDash(v) { return (v === undefined || v === null || v === '') ? '—' : v; }
+
 function showData(d, body) {
   document.getElementById('data-display').innerHTML =
-    '<div class="data-row"><span>Home Team</span><span>' + d.homeTeam + '</span></div>' +
-    '<div class="data-row"><span>Away Team</span><span>' + d.awayTeam + '</span></div>' +
-    '<div class="data-row"><span>Score</span><span>' + d.homeScore + ' – ' + d.awayScore + '</span></div>' +
-    '<div class="data-row"><span>Inning</span><span>' + d.topOrBottom + ' ' + d.inning + '</span></div>' +
-    '<div class="data-row"><span>Outs</span><span>' + d.outs + '</span></div>' +
+    '<div class="data-row"><span>Home Team</span><span>' + orDash(d.homeTeam) + '</span></div>' +
+    '<div class="data-row"><span>Away Team</span><span>' + orDash(d.awayTeam) + '</span></div>' +
+    '<div class="data-row"><span>Score</span><span>' + orDash(d.homeScore) + ' – ' + orDash(d.awayScore) + '</span></div>' +
+    '<div class="data-row"><span>Inning</span><span>' + orDash(d.topOrBottom) + ' ' + orDash(d.inning) + '</span></div>' +
+    '<div class="data-row"><span>Outs</span><span>' + orDash(d.outs) + '</span></div>' +
     '<div class="data-row"><span>Runners</span><span>' +
       (d.runner1B ? '1st ' : '') + (d.runner2B ? '2nd ' : '') + (d.runner3B ? '3rd' : '') + '</span></div>' +
-    '<div class="data-row"><span>Pitcher</span><span>' + d.pitcherName + '</span></div>' +
-    '<div class="data-row"><span>Count / Pitches</span><span>' + d.balls + '-' + d.strikes + ' / ' + d.pitchCount + '</span></div>' +
+    '<div class="data-row"><span>Pitcher</span><span>' + orDash(d.pitcherName) + '</span></div>' +
+    '<div class="data-row"><span>Count / Pitches</span><span>' + orDash(d.balls) + '-' + orDash(d.strikes) + ' / ' + orDash(d.pitchCount) + '</span></div>' +
     '<div class="data-row"><span>Last push</span><span>' + new Date().toLocaleTimeString() + '</span></div>';
   document.getElementById('raw-display').textContent = JSON.stringify(body, null, 2);
 }
@@ -234,15 +236,17 @@ async function poll() {
     var warnings = [];
     var outs = parseInt(d.outs) || 0;
 
+    // Away team bats in the top of the inning, home team in the bottom — matches
+    // "topOrBottom" below. Was backwards (home->Top, away->Bottom) per Chris, 2026-09-16.
     var teamsPayload = {};
-    var topTeamImg = lookupOrWarn(TOP_TEAM_MAP, d.homeTeam, 'Team', warnings);
-    var bottomTeamImg = lookupOrWarn(BOTTOM_TEAM_MAP, d.awayTeam, 'Team', warnings);
+    var topTeamImg = lookupOrWarn(TOP_TEAM_MAP, d.awayTeam, 'Team', warnings);
+    var bottomTeamImg = lookupOrWarn(BOTTOM_TEAM_MAP, d.homeTeam, 'Team', warnings);
     if (topTeamImg) teamsPayload['Top Team'] = topTeamImg;
     if (bottomTeamImg) teamsPayload['Bottom Team'] = bottomTeamImg;
 
     var batterPayload = {
-      'Top Score': parseInt(d.homeScore) || 0,
-      'Bottom Score': parseInt(d.awayScore) || 0,
+      'Top Score': parseInt(d.awayScore) || 0,
+      'Bottom Score': parseInt(d.homeScore) || 0,
       'Inning': parseInt(d.inning) || 1,
       '1 Out': outs >= 1,
       '2 Outs': outs >= 2,
