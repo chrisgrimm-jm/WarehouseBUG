@@ -35,6 +35,10 @@
   .data-row { display: flex; justify-content: space-between; color: #777; font-size: 11px; padding: 3px 0; border-bottom: 1px solid #1e1e1e; }
   .data-row span:last-child { color: #ccc; }
   .raw { margin-top: 12px; padding: 10px; background: #0a0a0a; border-radius: 6px; font-size: 10px; color: #666; word-break: break-all; max-height: 120px; overflow-y: auto; }
+  .picker-row { display: flex; gap: 6px; align-items: center; margin-top: 8px; padding: 8px; background: #241a0a; border: 1px solid #4a3510; border-radius: 6px; }
+  .picker-row span { font-size: 11px; color: #eab308; flex-shrink: 0; }
+  .picker-row select { flex: 1; background: #111; color: #eee; border: 1px solid #2a2a2a; border-radius: 4px; font-family: inherit; font-size: 11px; padding: 4px; }
+  .picker-row button { background: #eab308; color: #000; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
   .note { margin-top: 16px; padding: 12px; border-radius: 8px; background: #1f1a0a; border: 1px solid #3a2f10; font-size: 11px; line-height: 1.6; color: #d4b45a; }
   .note a { color: #eab308; }
 </style>
@@ -87,6 +91,7 @@
   <div class="status" id="status">
     <span class="dot" id="dot"></span><span id="status-text">Not running</span>
     <div id="data-display" style="margin-top:10px;"></div>
+    <div id="pitcher-picker"></div>
     <div class="raw" id="raw-display"></div>
   </div>
 
@@ -103,6 +108,10 @@
     Uncheck Teams/Batter/Pitcher above to stop this page from touching that sub-composition at
     all — use that if you need to take over a section manually in Singular's control panel
     without this page fighting you on the next poll. Choice is saved in this browser.
+    <br><br>
+    The platform doesn't report a pitcher until he throws his first pitch — when it comes back
+    undefined, a picker appears above so you can set the right pitcher immediately instead of
+    waiting. It automatically switches back to the real data as soon as the platform reports one.
   </div>
 </div>
 
@@ -243,6 +252,42 @@ function lookupOrWarn(map, value, label, warnings) {
   return null;
 }
 
+// Shows a dropdown of every known pitcher when the platform hasn't reported one yet (before
+// the new pitcher's first pitch). Manually picking one does a one-off PATCH -- poll() itself
+// leaves 'Pitcher Name' untouched whenever d.pitcherName is undefined, so this manual pick
+// naturally survives until the platform starts reporting a real name, at which point poll()
+// takes back over automatically. No persistent override state needed.
+function renderPitcherPicker(show) {
+  var container = document.getElementById('pitcher-picker');
+  if (!show || !Object.keys(PITCHER_MAP).length) { container.innerHTML = ''; return; }
+  if (document.getElementById('pitcher-select')) return; // already showing, leave the operator's selection alone
+  var names = Object.keys(PITCHER_MAP).sort();
+  container.innerHTML = '<div class="picker-row">' +
+    '<span>Pitcher not reported yet →</span>' +
+    '<select id="pitcher-select">' + names.map(function(n) {
+      return '<option value="' + n.replace(/"/g, '&quot;') + '">' + n + '</option>';
+    }).join('') + '</select>' +
+    '<button onclick="setPitcherManually()">Set</button>' +
+    '</div>';
+}
+
+async function setPitcherManually() {
+  var chosen = document.getElementById('pitcher-select').value;
+  var img = PITCHER_MAP[chosen];
+  if (!img) return;
+  try {
+    var sRes = await fetch(SINGULAR_URL, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify([{ subCompositionName: 'Pitcher', payload: { 'Pitcher Name': img } }])
+    });
+    if (!sRes.ok) throw new Error('Singular ' + sRes.status);
+    setStatus('green', 'Pitcher manually set to ' + chosen + ' · ' + new Date().toLocaleTimeString());
+  } catch (e) {
+    setStatus('red', 'Failed to set pitcher: ' + e.message);
+  }
+}
+
 async function poll() {
   var mySeq = ++pollSeq;
   var isManual = document.getElementById('mode-manual').checked;
@@ -320,8 +365,10 @@ async function poll() {
       var pitcherImg = lookupOrWarn(PITCHER_MAP, d.pitcherName, 'Pitcher', warnings);
       if (pitcherImg) pitcherPayload['Pitcher Name'] = pitcherImg;
       body.push({ subCompositionName: 'Pitcher', payload: pitcherPayload });
+      renderPitcherPicker(!d.pitcherName);
     } else {
       pausedSections.push('Pitcher');
+      renderPitcherPicker(false);
     }
 
     if (body.length) {
