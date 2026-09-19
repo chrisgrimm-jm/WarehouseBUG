@@ -66,7 +66,7 @@
 
   <div class="field">
     <label>Poll interval (seconds)</label>
-    <input type="number" id="interval" value="3" min="1" max="30" />
+    <input type="number" id="interval" value="3" min="1" max="30" onchange="updatePollInterval()" />
   </div>
 
   <div class="field">
@@ -84,6 +84,8 @@
     </div>
   </div>
 
+  <div id="pitcher-picker"></div>
+
   <button class="btn btn-start" id="start-btn" onclick="startPolling()">▶ Start</button>
   <button class="btn btn-stop" id="stop-btn" onclick="stopPolling()" style="display:none">■ Stop</button>
   <button class="btn" id="refresh-assets-btn" onclick="refreshAssets()" style="background:#2a2a2a; color:#ccc;">↻ Refresh team/pitcher images from Singular</button>
@@ -91,7 +93,6 @@
   <div class="status" id="status">
     <span class="dot" id="dot"></span><span id="status-text">Not running</span>
     <div id="data-display" style="margin-top:10px;"></div>
-    <div id="pitcher-picker"></div>
     <div class="raw" id="raw-display"></div>
   </div>
 
@@ -393,7 +394,6 @@ async function poll() {
 }
 
 async function startPolling() {
-  var interval = parseInt(document.getElementById('interval').value) * 1000;
   document.getElementById('start-btn').style.display = 'none';
   document.getElementById('stop-btn').style.display = 'block';
   if (!assetsLoaded) {
@@ -401,7 +401,17 @@ async function startPolling() {
     try { await loadAssetMaps(); } catch (e) { /* poll() will surface lookup warnings either way */ }
   }
   poll();
-  timer = setInterval(poll, interval);
+  timer = setInterval(poll, parseInt(document.getElementById('interval').value) * 1000);
+}
+
+// The interval was only ever read once at Start and baked into setInterval, so editing the
+// field afterward silently did nothing. Restart the timer with the new value if already running.
+function updatePollInterval() {
+  if (!timer) return;
+  var ms = parseInt(document.getElementById('interval').value) * 1000;
+  if (!ms || ms < 1000) return;
+  clearInterval(timer);
+  timer = setInterval(poll, ms);
 }
 
 function stopPolling() {
